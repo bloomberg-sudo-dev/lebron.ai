@@ -1,0 +1,66 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Datasets
+datasets/
+!datasets/.gitkeep
+
+# Checkpoints
+checkpoints/
+!checkpoints/.gitkeep
+
+# Logs
+logs/
+*.log
+
+# Outputs
+outputs/
+*.mp4
+*.png
+*.jpg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Tensorboard
+runs/
+events.out.tfevents*
+
+# Temporary
+*.tmp
+*.temp
+*.bak

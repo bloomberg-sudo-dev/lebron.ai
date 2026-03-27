@@ -1,0 +1,50 @@
+# REST Training Configuration
+
+model:
+  latent_dim: 4  # From Temporal VAE
+  hidden_dim: 768
+  num_heads: 12
+  num_blocks: 28
+  audio_dim: 256
+
+training:
+  num_epochs: 100
+  batch_size: 8
+  num_workers: 4
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-5
+  warmup_steps: 5000
+  gradient_clip: 1.0
+
+diffusion:
+  num_timesteps: 1000
+  beta_start: 0.0001
+  beta_end: 0.02
+  schedule_type: "linear"  # or "cosine"
+
+data:
+  data_root: "datasets/"
+  use_dummy: true  # Set to false when real data available
+  num_frames: 16
+  frame_size: [64, 64]  # Small for testing, increase for production
+  sample_rate: 16000
+  audio_length: 2
+
+optimization:
+  optimizer: "adamw"
+  lr_scheduler: "cosine"
+  num_warmup_epochs: 5
+
+checkpointing:
+  save_every: 1000  # Save every N iterations
+  keep_last_n: 3    # Keep last 3 checkpoints
+  save_dir: "checkpoints/"
+
+logging:
+  log_every: 100
+  tensorboard: true
+  log_dir: "logs/"
+
+inference:
+  num_inference_steps: 50  # Can use fewer with FM
+  guidance_scale: 1.0
