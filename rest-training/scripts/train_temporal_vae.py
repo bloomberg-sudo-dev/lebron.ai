@@ -44,9 +44,11 @@ def main():
     
     # Create dataloaders
     print(f"\n📦 Creating dataloaders...")
+    # Reduce batch size to fit in GPU memory
+    actual_batch_size = min(args.batch_size, 2)
     train_loader, val_loader = TalkingHeadDataLoader.create_loaders(
         data_root="datasets/",
-        batch_size=args.batch_size,
+        batch_size=actual_batch_size,
         use_dummy=True,  # Using dummy for testing
     )
     print(f"✅ Train batches: {len(train_loader)}")
