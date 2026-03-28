@@ -63,8 +63,16 @@ def main():
     audio_encoder.eval()
     print("✅ Audio encoder loaded")
     
-    # Create teacher
-    teacher = SimpleTeacher(audio_dim=256, latent_dim=4, seq_len=512).to(device)
+    # Determine seq_len from actual VAE output
+    print("Determining sequence length from VAE...")
+    dummy_video = torch.randn(1, 3, 2, 16, 16).to(device)  # 2 frames, 16x16
+    with torch.no_grad():
+        _, dummy_latents, _ = vae.encode(dummy_video)
+        seq_len = dummy_latents.view(dummy_latents.shape[0], -1, dummy_latents.shape[1]).shape[1]
+    print(f"✅ VAE output sequence length: {seq_len}")
+    
+    # Create teacher with correct seq_len
+    teacher = SimpleTeacher(audio_dim=256, latent_dim=4, seq_len=seq_len).to(device)
     optimizer = optim.Adam(teacher.parameters(), lr=args.lr)
     print("✅ Teacher model created")
     
