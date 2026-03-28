@@ -88,7 +88,9 @@ def main():
             # Get VAE latents
             with torch.no_grad():
                 _, latents, _ = vae.encode(video)  # (B, 4, T, H, W)
-                latents_flat = latents.view(latents.shape[0], -1, latents.shape[1]).transpose(1, 2)  # (B, 512, 4)
+                # Reshape to (B, T*H*W, 4)
+                B, C, T, H, W = latents.shape
+                latents_flat = latents.permute(0, 2, 3, 4, 1).reshape(B, -1, C)  # (B, T*H*W, 4)
                 audio_emb = audio_encoder(audio)
             
             # Teacher forward
