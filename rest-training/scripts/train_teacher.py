@@ -13,7 +13,7 @@ from omegaconf import OmegaConf
 import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from models import TemporalVAE, A2VDIT
+from models import TemporalVAE, A2VDIT, SpeechAE
 from datasets import TalkingHeadDataLoader
 
 def main():
@@ -44,10 +44,16 @@ def main():
     # Load VAE
     print(f"\n🧠 Loading Temporal VAE...")
     vae = TemporalVAE(in_channels=3, latent_channels=4, hidden_dims=[128, 256, 512]).to(device)
+    vae.eval()  # Freeze VAE
     
     if Path(args.vae_checkpoint).exists():
         vae.load_state_dict(torch.load(args.vae_checkpoint, map_location=device))
         print(f"✅ VAE loaded from {args.vae_checkpoint}")
+    
+    # Load Audio Encoder
+    print(f"\n🎵 Loading Audio Encoder (SpeechAE)...")
+    audio_encoder = SpeechAE(audio_dim=384, output_dim=256).to(device)
+    audio_encoder.eval()  # Freeze audio encoder
     else:
         print(f"⚠️  VAE checkpoint not found: {args.vae_checkpoint}")
         print("   Training with untrained VAE")
@@ -99,12 +105,16 @@ def main():
             with torch.no_grad():
                 _, latents, _ = vae.encode(video)  # (B, 4, T, H', W')
             
+            # Encode audio to features
+            with torch.no_grad():
+                audio_emb = audio_encoder(audio)  # (B, 256) or (B, T, 256)
+            
             # Forward pass through teacher
             optimizer.zero_grad()
             # Generate random diffusion timesteps (1-1000)
             timesteps = torch.randint(1, 1001, (video.shape[0],)).to(device)
             # Model expects: z, timesteps, audio_emb, ref_image
-            output = model(latents, timesteps, audio, ref_frame)
+            output = model(latents, timesteps, audio_emb, ref_frame)
             
             # Simple MSE loss (placeholder - would use diffusion loss in real impl)
             loss = nn.MSELoss()(output, latents)
