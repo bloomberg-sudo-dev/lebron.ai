@@ -83,10 +83,8 @@ def main():
             optimizer.zero_grad()
             recon_video, mu, logvar = model(video)
             
-            # VAE loss: reconstruction + KL divergence
-            recon_loss = nn.MSELoss()(recon_video, video)
-            kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-            loss = recon_loss + 0.001 * kl_loss
+            # VAE loss
+            loss, recon_loss, kl_loss = model.vae_loss(recon_video, video, mu, logvar)
             
             # Backward
             loss.backward()
@@ -107,9 +105,7 @@ def main():
             for batch in val_loader:
                 video = batch['video'].to(device)
                 recon_video, mu, logvar = model(video)
-                recon_loss = nn.MSELoss()(recon_video, video)
-                kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp())
-                loss = recon_loss + 0.001 * kl_loss
+                loss, _, _ = model.vae_loss(recon_video, video, mu, logvar)
                 val_loss += loss.item()
         
         avg_val_loss = val_loss / len(val_loader)
