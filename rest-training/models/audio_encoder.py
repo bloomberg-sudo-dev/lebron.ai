@@ -5,6 +5,7 @@ For real-time audio-to-video alignment
 
 import torch
 import torch.nn as nn
+from torch import Tensor
 from typing import Tuple, Optional
 
 
