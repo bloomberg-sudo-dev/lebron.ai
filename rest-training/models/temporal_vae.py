@@ -185,20 +185,14 @@ class TemporalVAE(nn.Module):
         # KL divergence weight (beta-VAE)
         self.kl_weight = kl_weight
         self.latent_channels = latent_channels
-        
-        # Distribution parameters (mu, logvar)
-        self.fc_mu = nn.Linear(latent_channels, latent_channels)
-        self.fc_logvar = nn.Linear(latent_channels, latent_channels)
     
     def encode(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Encode to latent distribution"""
         z = self.encoder(x)
-        # Flatten spatial dims for distribution
+        # Split latent into mu and logvar (simple trick: use half for each)
         B, C, T, H, W = z.shape
-        z_flat = z.view(B, C, -1).mean(dim=2, keepdim=True)  # (B, C, 1)
-        
-        mu = self.fc_mu(z_flat.squeeze(-1).T).T  # (B, C)
-        logvar = self.fc_logvar(z_flat.squeeze(-1).T).T  # (B, C)
+        mu = z.mean(dim=(2, 3, 4), keepdim=True)  # Average over T, H, W
+        logvar = torch.log(z.var(dim=(2, 3, 4), keepdim=True) + 1e-6)  # Log variance
         
         return z, mu, logvar
     
