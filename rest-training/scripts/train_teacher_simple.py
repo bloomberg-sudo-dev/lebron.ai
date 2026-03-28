@@ -34,9 +34,10 @@ class SimpleTeacher(nn.Module):
         x = torch.relu(x)
         
         # Interpolate to match latent sequence length
-        x = x.transpose(1, 2)  # (B, 128, T_audio)
-        x = torch.nn.functional.interpolate(x, size=self.seq_len, mode='linear', align_corners=False)
-        x = x.transpose(1, 2)  # (B, seq_len, 128)
+        if x.shape[1] != self.seq_len:
+            x = x.transpose(1, 2)  # (B, 128, T_audio)
+            x = torch.nn.functional.interpolate(x, size=self.seq_len, mode='linear', align_corners=False)
+            x = x.transpose(1, 2)  # (B, seq_len, 128)
         
         latents = self.latent_proj(x)  # (B, seq_len, latent_dim)
         return latents
@@ -68,8 +69,11 @@ def main():
     dummy_video = torch.randn(1, 3, 2, 16, 16).to(device)  # 2 frames, 16x16
     with torch.no_grad():
         _, dummy_latents, _ = vae.encode(dummy_video)
-        seq_len = dummy_latents.view(dummy_latents.shape[0], -1, dummy_latents.shape[1]).shape[1]
-    print(f"✅ VAE output sequence length: {seq_len}")
+        # dummy_latents shape: (B, C, T, H, W) = (1, 4, T, H, W)
+        B, C, T, H, W = dummy_latents.shape
+        seq_len = T * H * W  # Total flattened sequence length
+    print(f"✅ VAE output shape (B,C,T,H,W): {dummy_latents.shape}")
+    print(f"✅ Flattened sequence length: {seq_len}")
     
     # Create teacher with correct seq_len
     teacher = SimpleTeacher(audio_dim=256, latent_dim=4, seq_len=seq_len).to(device)
