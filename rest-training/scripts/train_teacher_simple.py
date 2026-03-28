@@ -30,13 +30,15 @@ class SimpleTeacher(nn.Module):
         if audio_emb.ndim == 2:
             audio_emb = audio_emb.unsqueeze(1)  # (B, 1, audio_dim)
         
-        x = self.audio_proj(audio_emb)  # (B, T, 128)
+        x = self.audio_proj(audio_emb)  # (B, T_audio, 128)
         x = torch.relu(x)
         
-        # Expand to full latent sequence
-        x = x.expand(-1, self.seq_len, -1)  # (B, 512, 128)
-        latents = self.latent_proj(x)  # (B, 512, latent_dim)
+        # Interpolate to match latent sequence length
+        x = x.transpose(1, 2)  # (B, 128, T_audio)
+        x = torch.nn.functional.interpolate(x, size=self.seq_len, mode='linear', align_corners=False)
+        x = x.transpose(1, 2)  # (B, seq_len, 128)
         
+        latents = self.latent_proj(x)  # (B, seq_len, latent_dim)
         return latents
 
 
