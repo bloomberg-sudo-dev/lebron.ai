@@ -17,7 +17,7 @@ mkdir -p checkpoints
 # Clear pycache to avoid stale bytecode
 find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 
-# Check for --debug flag
+# Check for flags
 if [[ "$1" == "--debug" ]]; then
     echo "🐛 DEBUG MODE: Running one iteration with verbose output..."
     echo ""
@@ -27,10 +27,10 @@ if [[ "$1" == "--debug" ]]; then
         --lr 1e-3 \
         --data-root datasets/ \
         --checkpoint-dir checkpoints/
-else
-    echo "🚀 Starting teacher training (FIXED version)..."
+elif [[ "$1" == "--working" ]]; then
+    echo "🚀 Running WORKING version with DYNAMIC seq_len..."
     echo ""
-    python3 scripts/train_teacher_fixed.py \
+    python3 scripts/train_teacher_working.py \
         --epochs 50 \
         --batch-size 2 \
         --lr 1e-3 \
@@ -38,5 +38,21 @@ else
         --checkpoint-dir checkpoints/
     
     echo ""
-    echo "✅ Training complete! Checkpoint saved to checkpoints/teacher_fixed.pt"
+    echo "✅ Training complete! Checkpoint saved to checkpoints/teacher_working.pt"
+else
+    echo "Usage:"
+    echo "  bash train.sh --debug    (test one batch, verbose)"
+    echo "  bash train.sh --working  (full training with dynamic seq_len)"
+    echo ""
+    echo "Running default (full training)..."
+    echo ""
+    python3 scripts/train_teacher_working.py \
+        --epochs 50 \
+        --batch-size 2 \
+        --lr 1e-3 \
+        --data-root datasets/ \
+        --checkpoint-dir checkpoints/
+    
+    echo ""
+    echo "✅ Training complete! Checkpoint saved to checkpoints/teacher_working.pt"
 fi
