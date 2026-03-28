@@ -101,7 +101,10 @@ def main():
             
             # Forward pass through teacher
             optimizer.zero_grad()
-            output = model(latents, audio, ref_frame)
+            # Generate random diffusion timesteps (1-1000)
+            timesteps = torch.randint(1, 1001, (video.shape[0],)).to(device)
+            # Model expects: z, timesteps, audio_emb, ref_image
+            output = model(latents, timesteps, audio, ref_frame)
             
             # Simple MSE loss (placeholder - would use diffusion loss in real impl)
             loss = nn.MSELoss()(output, latents)
