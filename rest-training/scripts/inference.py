@@ -32,7 +32,7 @@ def main():
     # Load models
     print(f"\n🧠 Loading models...")
     
-    vae = TemporalVAE(in_channels=3, latent_dim=4, hidden_dim=64).to(device)
+    vae = TemporalVAE(in_channels=3, latent_channels=4, hidden_dims=[128, 256, 512]).to(device)
     model = A2VDIT(
         latent_dim=4,
         hidden_dim=768,

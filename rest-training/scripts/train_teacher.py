@@ -43,7 +43,7 @@ def main():
     
     # Load VAE
     print(f"\n🧠 Loading Temporal VAE...")
-    vae = TemporalVAE(in_channels=3, latent_dim=4, hidden_dim=64).to(device)
+    vae = TemporalVAE(in_channels=3, latent_channels=4, hidden_dims=[128, 256, 512]).to(device)
     
     if Path(args.vae_checkpoint).exists():
         vae.load_state_dict(torch.load(args.vae_checkpoint, map_location=device))

@@ -56,8 +56,8 @@ def main():
     print(f"\n🧠 Creating Temporal VAE...")
     model = TemporalVAE(
         in_channels=3,
-        latent_dim=4,
-        hidden_dim=64,
+        latent_channels=4,
+        hidden_dims=[128, 256, 512],
     ).to(device)
     print(f"✅ Model created")
     print(f"   Parameters: {sum(p.numel() for p in model.parameters()):,}")
