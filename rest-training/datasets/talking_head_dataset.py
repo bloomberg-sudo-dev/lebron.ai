@@ -143,8 +143,8 @@ class DummyTalkingHeadDataset(Dataset):
     def __init__(
         self,
         num_samples: int = 100,
-        num_frames: int = 4,  # Reduced from 8 to save memory
-        frame_size: Tuple[int, int] = (32, 32),
+        num_frames: int = 2,  # Tiny: 2 frames
+        frame_size: Tuple[int, int] = (16, 16),  # Tiny: 16x16
         sample_rate: int = 16000,
         audio_length: int = 1,
     ):

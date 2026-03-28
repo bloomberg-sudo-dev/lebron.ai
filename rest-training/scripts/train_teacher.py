@@ -78,8 +78,8 @@ def main():
     print(f"\n🧠 Creating A2V-DiT (Teacher)...")
     model = A2VDIT(
         latent_dim=4,
-        hidden_dim=256,  # Reduced from 768
-        num_heads=8,     # Reduced from 12
+        hidden_dim=128,  # Reduced from 256
+        num_heads=4,     # Reduced from 8
         num_blocks=28,
         audio_dim=256,
     ).to(device)
