@@ -49,17 +49,19 @@ def main():
     if Path(args.vae_checkpoint).exists():
         vae.load_state_dict(torch.load(args.vae_checkpoint, map_location=device))
         print(f"✅ VAE loaded from {args.vae_checkpoint}")
+    else:
+        print(f"⚠️  VAE checkpoint not found: {args.vae_checkpoint}")
+        print("   Training with untrained VAE")
+    
+    for param in vae.parameters():
+        param.requires_grad = False
     
     # Load Audio Encoder
     print(f"\n🎵 Loading Audio Encoder (SpeechAE)...")
     audio_encoder = SpeechAE(audio_dim=384, output_dim=256).to(device)
     audio_encoder.eval()  # Freeze audio encoder
-    else:
-        print(f"⚠️  VAE checkpoint not found: {args.vae_checkpoint}")
-        print("   Training with untrained VAE")
     
-    vae.eval()
-    for param in vae.parameters():
+    for param in audio_encoder.parameters():
         param.requires_grad = False
     
     # Create dataloaders
