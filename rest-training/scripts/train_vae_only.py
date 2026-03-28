@@ -50,12 +50,10 @@ def main():
             
             # VAE forward
             optimizer.zero_grad()
-            recon, latents, loss_dict = vae(video)
+            recon, latents, _ = vae(video)
             
-            # Loss: MSE + KL
-            mse_loss = nn.MSELoss()(recon, video)
-            kl_loss = loss_dict.get('kl', torch.tensor(0.0))
-            loss = mse_loss + 0.00001 * kl_loss
+            # Loss: just MSE for now
+            loss = nn.MSELoss()(recon, video)
             
             loss.backward()
             optimizer.step()
