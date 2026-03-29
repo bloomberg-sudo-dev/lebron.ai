@@ -86,7 +86,7 @@ def main():
     parser = argparse.ArgumentParser(description="Full Evaluation Suite")
     parser.add_argument("--checkpoint-dir", type=str, default="checkpoints/")
     parser.add_argument("--teacher-ckpt", type=str, default="teacher_working.pt")
-    parser.add_argument("--batch-size", type=int, default=4)
+    parser.add_argument("--batch-size", type=int, default=1)  # Reduced default
     parser.add_argument("--num-batches", type=int, default=10)
     parser.add_argument("--data-root", type=str, default="datasets/")
     parser.add_argument("--output-report", type=str, default="evaluation_report.txt")
@@ -148,6 +148,10 @@ def main():
             
             video = batch['video'].to(device)
             audio = batch['audio'].to(device)
+            
+            # Memory cleanup
+            if batch_idx % 2 == 0:
+                torch.cuda.empty_cache()
             
             # Get VAE latents
             _, vae_latents, _ = vae.encode(video)

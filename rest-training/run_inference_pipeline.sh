@@ -22,12 +22,13 @@ NC='\033[0m' # No Color
 # Step 1: Inference
 echo -e "${BLUE}STEP 1: Teacher Model Inference${NC}"
 echo "Testing teacher on held-out data and computing quality metrics..."
+echo "(Using batch-size=1 to avoid GPU OOM on large videos)"
 echo ""
 python3 scripts/inference.py \
     --checkpoint-dir checkpoints/ \
     --teacher-ckpt teacher_working.pt \
-    --batch-size 4 \
-    --num-batches 5 \
+    --batch-size 1 \
+    --num-batches 3 \
     --data-root datasets/
 
 echo ""
@@ -36,12 +37,13 @@ echo -e "${GREEN}✅ Inference complete!${NC}\n"
 # Step 2: Full Evaluation
 echo -e "${BLUE}STEP 2: Comprehensive Evaluation${NC}"
 echo "Computing detailed metrics and generating report..."
+echo "(Using batch-size=1 to avoid GPU OOM)"
 echo ""
 python3 scripts/evaluate.py \
     --checkpoint-dir checkpoints/ \
     --teacher-ckpt teacher_working.pt \
-    --batch-size 4 \
-    --num-batches 10 \
+    --batch-size 1 \
+    --num-batches 5 \
     --data-root datasets/ \
     --output-report evaluation_report.txt
 
@@ -51,14 +53,15 @@ echo -e "${GREEN}✅ Evaluation complete!${NC}\n"
 # Step 3: Generate Videos
 echo -e "${BLUE}STEP 3: Generate Sample Videos${NC}"
 echo "Creating video outputs (real vs predicted)..."
+echo "(Using batch-size=1 to avoid GPU OOM)"
 echo ""
 python3 scripts/generate_video.py \
     --checkpoint-dir checkpoints/ \
     --teacher-ckpt teacher_working.pt \
     --output-dir outputs/ \
-    --batch-size 2 \
+    --batch-size 1 \
     --data-root datasets/ \
-    --num-samples 3
+    --num-samples 1
 
 echo ""
 echo -e "${GREEN}✅ Video generation complete!${NC}\n"

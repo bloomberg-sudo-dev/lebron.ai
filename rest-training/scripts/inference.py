@@ -49,9 +49,10 @@ def main():
     parser = argparse.ArgumentParser(description="Teacher Model Inference")
     parser.add_argument("--checkpoint-dir", type=str, default="checkpoints/")
     parser.add_argument("--teacher-ckpt", type=str, default="teacher_working.pt")
-    parser.add_argument("--batch-size", type=int, default=4)
+    parser.add_argument("--batch-size", type=int, default=1)  # Reduced default
     parser.add_argument("--num-batches", type=int, default=5)
     parser.add_argument("--data-root", type=str, default="datasets/")
+    parser.add_argument("--enable-memory-cleanup", action="store_true", default=True)
     args = parser.parse_args()
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -118,6 +119,10 @@ def main():
             
             video = batch['video'].to(device)
             audio = batch['audio'].to(device)
+            
+            # Memory cleanup (helps with large videos)
+            if args.enable_memory_cleanup and batch_idx % 2 == 0:
+                torch.cuda.empty_cache()
             
             # Get VAE latents
             _, vae_latents, _ = vae.encode(video)

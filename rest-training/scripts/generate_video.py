@@ -62,9 +62,9 @@ def main():
     parser.add_argument("--checkpoint-dir", type=str, default="checkpoints/")
     parser.add_argument("--teacher-ckpt", type=str, default="teacher_working.pt")
     parser.add_argument("--output-dir", type=str, default="outputs/")
-    parser.add_argument("--batch-size", type=int, default=2)
+    parser.add_argument("--batch-size", type=int, default=1)  # Reduced default
     parser.add_argument("--data-root", type=str, default="datasets/")
-    parser.add_argument("--num-samples", type=int, default=3)
+    parser.add_argument("--num-samples", type=int, default=2)
     args = parser.parse_args()
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -126,6 +126,9 @@ def main():
             
             video_real = batch['video'].to(device)
             audio = batch['audio'].to(device)
+            
+            # Memory cleanup
+            torch.cuda.empty_cache()
             
             B = video_real.shape[0]
             
