@@ -5,8 +5,19 @@ set -e
 
 cd "$(dirname "$0")"
 
-# Activate venv
-source venv/bin/activate
+# Create venv if it doesn't exist
+if [ ! -d "venv" ]; then
+  echo "📦 Creating virtual environment..."
+  python3 -m venv venv
+  source venv/bin/activate
+  echo "📥 Installing dependencies..."
+  pip install -q --upgrade pip
+  pip install -q -r requirements.txt
+  echo "✅ Setup complete"
+else
+  # Activate existing venv
+  source venv/bin/activate
+fi
 
 # Parse command
 case "$1" in
