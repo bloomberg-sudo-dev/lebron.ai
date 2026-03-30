@@ -1,2 +1,2 @@
-opencv-python==4.8.1.78
-yt-dlp==2024.3.4
+opencv-python>=4.8.0
+yt-dlp>=2025.0.0
