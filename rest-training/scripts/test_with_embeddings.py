@@ -57,7 +57,10 @@ class EmbeddingTestDataset(Dataset):
         
         # Validate shape
         if self.embeddings.dim() == 3:  # (T, H, W) - single channel
+            print(f"Expanding single-channel embeddings from {self.embeddings.shape}")
             self.embeddings = self.embeddings.unsqueeze(1)  # (T, 1, H, W)
+            self.embeddings = self.embeddings.repeat(1, 8, 1, 1)  # (T, 8, H, W)
+            print(f"Expanded to {self.embeddings.shape}")
         elif self.embeddings.dim() == 4 and self.embeddings.shape[1] != 8:
             # (T, C, H, W) but wrong channel - might be (T, H, W, C)
             if self.embeddings.shape[-1] in [8, 16, 32]:
@@ -116,69 +119,53 @@ def test_model_forward(model, batch, device, name="Model"):
         print(f"   video (raw): {video.shape} (ndim={video.dim()})")
         print(f"   audio (raw): {audio.shape}")
         
-        # The embeddings might be (B, T, H, W, C) or other format
-        # Let's just try to reshape to what A2V-DiT expects: (B, C, T, H, W)
+        # Dataset returns unbatched items: (T, C, H, W)
+        # DataLoader batches them → (B, T, C, H, W)
+        # But if batch_size=1, this looks like (1, T, C, H, W)
         
-        # If video has 6+ dims, it might be stacked incorrectly
-        if video.dim() > 5:
-            print(f"⚠️  Video has {video.dim()} dimensions, attempting to reshape...")
-            # Try squeezing extra dimensions
-            video = video.squeeze()
-            print(f"   After squeeze: {video.shape}")
+        # Handle batch dimension
+        if video.dim() == 4:
+            # Unbatched (T, C, H, W) - add batch dim
+            print(f"⚠️  No batch dim detected, adding B=1")
+            video = video.unsqueeze(0)  # (1, T, C, H, W)
         
-        B = video.shape[0]
-        
-        # Handle 6D: (B, T, ?, ?, ?, ?) → (B, C, T, H, W)
-        if video.dim() == 6:
-            # Likely (B, T, D1, D2, D3, D4) where last 4 dims encode spatial/channel info
-            # Reshape to (B, T, -1) then figure out C, H, W
-            T = video.shape[1]
-            rolled = video.reshape(B, T, -1)  # (B, T, D1*D2*D3*D4)
-            
-            # Now we need to go from (B, T, N) to (B, C, T, H, W)
-            # Reasonable assumption: reshape last dim into C, H, W
-            # Try: C=8 (typical VAE), H=?, W=?
-            total_spatial = rolled.shape[2]  # D1*D2*D3*D4
-            
-            # Common latent sizes: 8x32x32, 8x16x16, 8x8x8, etc.
-            # If total_spatial = 3*3*3*3 = 81, try 8x3x3 + extra or 9x3x3
-            # Let's try (B, T, 81) → (B, 9, T, 3, 3) or (B, 8, T, ?, ?)
-            
-            # Find factors of total_spatial
-            h = w = int(total_spatial ** 0.5)
-            if h * w != total_spatial:
-                # Try different factorizations
-                for test_h in range(1, int(total_spatial**0.5) + 1):
-                    if total_spatial % test_h == 0:
-                        test_w = total_spatial // test_h
-                        h, w = test_h, test_w
-                        break
-            
-            c = 1  # Default to 1 channel if ambiguous
-            print(f"   Reshaping (B, T, {total_spatial}) → (B, {c}, T, {h}, {w})")
-            
-            z = rolled.view(B, T, c, h, w)  # (B, T, C, H, W)
-            z = z.permute(0, 2, 1, 3, 4)    # (B, C, T, H, W)
-        elif video.dim() == 5:
-            # Could be (B, T, C, H, W) or (B, C, T, H, W)
-            # Check if it looks like pre-computed VAE latents (usually 8 channels)
-            if video.shape[1] == 8 or video.shape[2] == 8:  # If 8 is in position 1 or 2, it's likely C
-                if video.shape[2] == 8:  # (B, T, 8, H, W) - channels in position 2
-                    z = video.permute(0, 2, 1, 3, 4)  # → (B, 8, T, H, W)
-                else:  # (B, 8, T, H, W) - already correct
-                    z = video
-            else:
+        if video.dim() == 5:
+            # Now we should have (B, T, C, H, W)
+            # Check position of channel: if position 2 is 8, then (B, T, 8, H, W)
+            B, T, C, H, W = video.shape
+            if C == 8:  # (B, T, 8, H, W) - channels in position 2 (correct for VAE output)
+                # Permute to (B, C, T, H, W) for model
+                z = video.permute(0, 2, 1, 3, 4)  # (B, 8, T, H, W)
+                print(f"   ✅ Detected (B, T, 8, H, W), permuting to (B, 8, T, H, W)")
+            elif video.shape[1] == 8:
+                # Already (B, 8, T, H, W)
                 z = video
+                print(f"   ✅ Already in (B, 8, T, H, W) format")
+            else:
+                # Unusual shape, try to guess
+                print(f"⚠️  Unusual shape {video.shape}, assuming (B, T, C, H, W)")
+                z = video.permute(0, 2, 1, 3, 4) if video.shape[1] != 8 else video
         else:
-            z = video
+            raise ValueError(f"Expected 4D or 5D tensor, got {video.dim()}D: {video.shape}")
         
-        print(f"   video (reshaped): {z.shape}")
+        B = z.shape[0]
+        C = z.shape[1]
+        T = z.shape[2]
+        
+        print(f"   video (final): {z.shape} = (B={B}, C={C}, T={T}, H={z.shape[3]}, W={z.shape[4]})")
         
         # audio_emb: (B, T, audio_dim)
-        if z.dim() == 5 and audio.dim() == 2:
-            T = z.shape[2]
+        if audio.dim() == 1:
+            # (audio_dim,) - add batch and time dims
+            audio = audio.unsqueeze(0).unsqueeze(0)  # (1, 1, audio_dim)
+            audio = audio.expand(B, T, -1)
+            print(f"   ✅ Expanded audio to (B, T, audio_dim): {audio.shape}")
+        elif audio.dim() == 2:
+            # (B, audio_dim) - add time dim
             audio = audio.unsqueeze(1).expand(-1, T, -1)
-        print(f"   audio (reshaped): {audio.shape}")
+            print(f"   ✅ Expanded audio to (B, T, audio_dim): {audio.shape}")
+        
+        print(f"   audio (final): {audio.shape}")
         
         # ref_image: (B, C, 1, 1, 1)
         if z.dim() == 5:
