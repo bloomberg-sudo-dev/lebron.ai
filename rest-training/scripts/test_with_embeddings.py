@@ -107,27 +107,43 @@ class EmbeddingTestDataset(Dataset):
 
 
 def test_model_forward(model, batch, device, name="Model"):
-    """Test forward pass"""
+    """Test A2V-DiT forward pass"""
     try:
-        video = batch['video'].to(device)  # (B, T, C, H, W)
-        audio = batch['audio'].to(device)
-        id_emb = batch['id'].to(device)
+        video = batch['video'].to(device)  # (B, T, C, H, W) - pre-computed embeddings
+        audio = batch['audio'].to(device)  # (B, audio_dim)
+        id_emb = batch['id'].to(device)    # (B, id_dim)
+        
+        # Reshape for model expectations
+        B = video.shape[0]
+        
+        # A2V-DiT expects:
+        # z: (B, latent_dim, T, H, W) - if video is (B, T, C, H, W), transpose to (B, C, T, H, W)
+        if video.dim() == 5:
+            z = video.permute(0, 2, 1, 3, 4)  # (B, C, T, H, W)
+        else:
+            z = video
+        
+        # audio_emb: (B, T, audio_dim) - expand if needed
+        if audio.dim() == 2:
+            audio = audio.unsqueeze(1).expand(-1, z.shape[2], -1)  # (B, T, audio_dim)
+        
+        # ref_image: (B, C, 1, 1, 1) - use first frame
+        ref_image = z[:, :, 0:1, 0:1, 0:1]  # (B, C, 1, 1, 1)
         
         # Dummy timesteps
-        B = video.shape[0]
         timesteps = torch.randint(0, 1000, (B,)).to(device)
         
-        # Forward
+        # Forward - A2V-DiT signature: (z, timesteps, audio_emb, ref_image)
         with torch.no_grad():
             output = model(
-                x=video,
-                timestep=timesteps,
-                audio_cond=audio.unsqueeze(1) if audio.dim() == 2 else audio,
-                id_cond=id_emb.unsqueeze(1) if id_emb.dim() == 2 else id_emb,
+                z=z,
+                timesteps=timesteps,
+                audio_emb=audio,
+                ref_image=ref_image,
             )
         
         print(f"✅ {name} forward pass successful!")
-        print(f"   Input shape: {video.shape}")
+        print(f"   Input shape: z={z.shape}, audio={audio.shape}, ref={ref_image.shape}")
         print(f"   Output shape: {output.shape if hasattr(output, 'shape') else 'tensor'}")
         return True
     except Exception as e:
