@@ -88,8 +88,10 @@ def test_model_forward(model, batch, device, name="Model"):
                     if total % th == 0:
                         h, w = th, total // th
                         break
-            print(f"   6D reshape: {total}={h}x{w}, (B, C=1, T, H={h}, W={w})")
+            print(f"   6D reshape: total={total}={h}x{w}, (B, C=1, T, H={h}, W={w})")
             z = video.reshape(B, T, 1, h, w).permute(0, 2, 1, 3, 4)
+            z = z.repeat(1, 4, 1, 1, 1)
+            print(f"   Duplicated channels: {z.shape} (1 -> 4 channels for model)")
         elif video.dim() == 5:
             if video.shape[2] == 8:
                 z = video.permute(0, 2, 1, 3, 4)
