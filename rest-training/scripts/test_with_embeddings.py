@@ -119,34 +119,40 @@ def test_model_forward(model, batch, device, name="Model"):
         print(f"   video (raw): {video.shape} (ndim={video.dim()})")
         print(f"   audio (raw): {audio.shape}")
         
-        # Dataset returns unbatched items: (T, C, H, W)
-        # DataLoader batches them → (B, T, C, H, W)
-        # But if batch_size=1, this looks like (1, T, C, H, W)
-        
-        # Handle batch dimension
-        if video.dim() == 4:
-            # Unbatched (T, C, H, W) - add batch dim
-            print(f"⚠️  No batch dim detected, adding B=1")
-            video = video.unsqueeze(0)  # (1, T, C, H, W)
-        
-        if video.dim() == 5:
-            # Now we should have (B, T, C, H, W)
-            # Check position of channel: if position 2 is 8, then (B, T, 8, H, W)
-            B, T, C, H, W = video.shape
-            if C == 8:  # (B, T, 8, H, W) - channels in position 2 (correct for VAE output)
-                # Permute to (B, C, T, H, W) for model
-                z = video.permute(0, 2, 1, 3, 4)  # (B, 8, T, H, W)
-                print(f"   ✅ Detected (B, T, 8, H, W), permuting to (B, 8, T, H, W)")
+        # Handle different dimensionalities
+        if video.dim() == 6:
+            # (B, T, D1, D2, D3, D4) - spatial dims flattened/split
+            B, T, d1, d2, d3, d4 = video.shape
+            total = d1 * d2 * d3 * d4
+            c = 8  # VAE has 8 channels
+            hw = total // c
+            h = w = int(hw ** 0.5)
+            if h * w != hw:
+                for th in range(1, int(hw**0.5) + 1):
+                    if hw % th == 0:
+                        h, w = th, hw // th
+                        break
+            print(f"   6D reshape: total={total}, c={c}, h={h}, w={w}")
+            z = video.reshape(B, T, c, h, w).permute(0, 2, 1, 3, 4)
+        elif video.dim() == 5:
+            # (B, T, C, H, W) or (B, C, T, H, W)
+            if video.shape[2] == 8:
+                z = video.permute(0, 2, 1, 3, 4)
+                print(f"   ✅ Detected (B, T, 8, H, W), permuted to (B, 8, T, H, W)")
             elif video.shape[1] == 8:
-                # Already (B, 8, T, H, W)
                 z = video
-                print(f"   ✅ Already in (B, 8, T, H, W) format")
+                print(f"   ✅ Already (B, 8, T, H, W)")
             else:
-                # Unusual shape, try to guess
-                print(f"⚠️  Unusual shape {video.shape}, assuming (B, T, C, H, W)")
-                z = video.permute(0, 2, 1, 3, 4) if video.shape[1] != 8 else video
+                z = video.permute(0, 2, 1, 3, 4)
+        elif video.dim() == 4:
+            # (T, C, H, W) - add batch dim
+            video = video.unsqueeze(0)  # (1, T, C, H, W)
+            if video.shape[2] == 8:
+                z = video.permute(0, 2, 1, 3, 4)
+            else:
+                z = video
         else:
-            raise ValueError(f"Expected 4D or 5D tensor, got {video.dim()}D: {video.shape}")
+            raise ValueError(f"Unsupported shape: {video.dim()}D {video.shape}")
         
         B = z.shape[0]
         C = z.shape[1]
@@ -156,23 +162,17 @@ def test_model_forward(model, batch, device, name="Model"):
         
         # audio_emb: (B, T, audio_dim)
         if audio.dim() == 1:
-            # (audio_dim,) - add batch and time dims
-            audio = audio.unsqueeze(0).unsqueeze(0)  # (1, 1, audio_dim)
-            audio = audio.expand(B, T, -1)
-            print(f"   ✅ Expanded audio to (B, T, audio_dim): {audio.shape}")
+            audio = audio.unsqueeze(0).unsqueeze(0).expand(B, T, -1)
+            print(f"   ✅ Expanded audio to {audio.shape}")
         elif audio.dim() == 2:
-            # (B, audio_dim) - add time dim
             audio = audio.unsqueeze(1).expand(-1, T, -1)
-            print(f"   ✅ Expanded audio to (B, T, audio_dim): {audio.shape}")
+            print(f"   ✅ Expanded audio to {audio.shape}")
         
         print(f"   audio (final): {audio.shape}")
         
         # ref_image: (B, C, 1, 1, 1)
-        if z.dim() == 5:
-            ref_image = z[:, :, 0:1, 0:1, 0:1]
-        else:
-            ref_image = None
-        print(f"   ref_image: {ref_image.shape if ref_image is not None else 'None'}")
+        ref_image = z[:, :, 0:1, 0:1, 0:1]
+        print(f"   ref_image: {ref_image.shape}")
         
         # Dummy timesteps
         timesteps = torch.randint(0, 1000, (B,)).to(device)
@@ -187,7 +187,7 @@ def test_model_forward(model, batch, device, name="Model"):
             )
         
         print(f"\n✅ {name} forward pass successful!")
-        print(f"   Output shape: {output.shape if hasattr(output, 'shape') else 'tensor'}")
+        print(f"   Output shape: {output.shape}")
         return True
     except Exception as e:
         print(f"\n❌ {name} forward pass failed!")
