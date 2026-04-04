@@ -58,7 +58,7 @@ def extract_frames(video_path, output_dir, frame_size=512):
 
 
 def extract_audio(video_path, output_dir):
-    """Extract audio from video using ffmpeg"""
+    """Extract audio from video using ffmpeg (optional, non-blocking)"""
     audio_path = os.path.join(output_dir, "audio.wav")
     
     cmd = [
@@ -73,8 +73,11 @@ def extract_audio(video_path, output_dir):
         result = subprocess.run(cmd, capture_output=True, check=True)
         print(f"  ✅ Audio extracted")
         return True
+    except FileNotFoundError:
+        # ffmpeg not installed, skip silently
+        return False
     except subprocess.CalledProcessError as e:
-        print(f"  ⚠️  Audio extraction failed")
+        # ffmpeg error, skip silently
         return False
 
 
