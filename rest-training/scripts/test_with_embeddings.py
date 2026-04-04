@@ -128,8 +128,38 @@ def test_model_forward(model, batch, device, name="Model"):
         
         B = video.shape[0]
         
-        # Try to get to (B, C, T, H, W) format
-        if video.dim() == 5:
+        # Handle 6D: (B, T, ?, ?, ?, ?) → (B, C, T, H, W)
+        if video.dim() == 6:
+            # Likely (B, T, D1, D2, D3, D4) where last 4 dims encode spatial/channel info
+            # Reshape to (B, T, -1) then figure out C, H, W
+            T = video.shape[1]
+            rolled = video.reshape(B, T, -1)  # (B, T, D1*D2*D3*D4)
+            
+            # Now we need to go from (B, T, N) to (B, C, T, H, W)
+            # Reasonable assumption: reshape last dim into C, H, W
+            # Try: C=8 (typical VAE), H=?, W=?
+            total_spatial = rolled.shape[2]  # D1*D2*D3*D4
+            
+            # Common latent sizes: 8x32x32, 8x16x16, 8x8x8, etc.
+            # If total_spatial = 3*3*3*3 = 81, try 8x3x3 + extra or 9x3x3
+            # Let's try (B, T, 81) → (B, 9, T, 3, 3) or (B, 8, T, ?, ?)
+            
+            # Find factors of total_spatial
+            h = w = int(total_spatial ** 0.5)
+            if h * w != total_spatial:
+                # Try different factorizations
+                for test_h in range(1, int(total_spatial**0.5) + 1):
+                    if total_spatial % test_h == 0:
+                        test_w = total_spatial // test_h
+                        h, w = test_h, test_w
+                        break
+            
+            c = 1  # Default to 1 channel if ambiguous
+            print(f"   Reshaping (B, T, {total_spatial}) → (B, {c}, T, {h}, {w})")
+            
+            z = rolled.view(B, T, c, h, w)  # (B, T, C, H, W)
+            z = z.permute(0, 2, 1, 3, 4)    # (B, C, T, H, W)
+        elif video.dim() == 5:
             # Could be (B, T, C, H, W) or (B, C, T, H, W)
             # Check if it looks like pre-computed VAE latents (usually 8 channels)
             if video.shape[1] == 8 or video.shape[2] == 8:  # If 8 is in position 1 or 2, it's likely C
