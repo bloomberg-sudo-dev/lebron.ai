@@ -109,31 +109,58 @@ class EmbeddingTestDataset(Dataset):
 def test_model_forward(model, batch, device, name="Model"):
     """Test A2V-DiT forward pass"""
     try:
-        video = batch['video'].to(device)  # (B, T, C, H, W) - pre-computed embeddings
+        video = batch['video'].to(device)  # Pre-computed embeddings
         audio = batch['audio'].to(device)  # (B, audio_dim)
-        id_emb = batch['id'].to(device)    # (B, id_dim)
         
-        # Reshape for model expectations
+        print(f"\n📊 Input tensor shapes:")
+        print(f"   video (raw): {video.shape} (ndim={video.dim()})")
+        print(f"   audio (raw): {audio.shape}")
+        
+        # The embeddings might be (B, T, H, W, C) or other format
+        # Let's just try to reshape to what A2V-DiT expects: (B, C, T, H, W)
+        
+        # If video has 6+ dims, it might be stacked incorrectly
+        if video.dim() > 5:
+            print(f"⚠️  Video has {video.dim()} dimensions, attempting to reshape...")
+            # Try squeezing extra dimensions
+            video = video.squeeze()
+            print(f"   After squeeze: {video.shape}")
+        
         B = video.shape[0]
         
-        # A2V-DiT expects:
-        # z: (B, latent_dim, T, H, W) - if video is (B, T, C, H, W), transpose to (B, C, T, H, W)
+        # Try to get to (B, C, T, H, W) format
         if video.dim() == 5:
-            z = video.permute(0, 2, 1, 3, 4)  # (B, C, T, H, W)
+            # Could be (B, T, C, H, W) or (B, C, T, H, W)
+            # Check if it looks like pre-computed VAE latents (usually 8 channels)
+            if video.shape[1] == 8 or video.shape[2] == 8:  # If 8 is in position 1 or 2, it's likely C
+                if video.shape[2] == 8:  # (B, T, 8, H, W) - channels in position 2
+                    z = video.permute(0, 2, 1, 3, 4)  # → (B, 8, T, H, W)
+                else:  # (B, 8, T, H, W) - already correct
+                    z = video
+            else:
+                z = video
         else:
             z = video
         
-        # audio_emb: (B, T, audio_dim) - expand if needed
-        if audio.dim() == 2:
-            audio = audio.unsqueeze(1).expand(-1, z.shape[2], -1)  # (B, T, audio_dim)
+        print(f"   video (reshaped): {z.shape}")
         
-        # ref_image: (B, C, 1, 1, 1) - use first frame
-        ref_image = z[:, :, 0:1, 0:1, 0:1]  # (B, C, 1, 1, 1)
+        # audio_emb: (B, T, audio_dim)
+        if z.dim() == 5 and audio.dim() == 2:
+            T = z.shape[2]
+            audio = audio.unsqueeze(1).expand(-1, T, -1)
+        print(f"   audio (reshaped): {audio.shape}")
+        
+        # ref_image: (B, C, 1, 1, 1)
+        if z.dim() == 5:
+            ref_image = z[:, :, 0:1, 0:1, 0:1]
+        else:
+            ref_image = None
+        print(f"   ref_image: {ref_image.shape if ref_image is not None else 'None'}")
         
         # Dummy timesteps
         timesteps = torch.randint(0, 1000, (B,)).to(device)
         
-        # Forward - A2V-DiT signature: (z, timesteps, audio_emb, ref_image)
+        # Forward
         with torch.no_grad():
             output = model(
                 z=z,
@@ -142,12 +169,11 @@ def test_model_forward(model, batch, device, name="Model"):
                 ref_image=ref_image,
             )
         
-        print(f"✅ {name} forward pass successful!")
-        print(f"   Input shape: z={z.shape}, audio={audio.shape}, ref={ref_image.shape}")
+        print(f"\n✅ {name} forward pass successful!")
         print(f"   Output shape: {output.shape if hasattr(output, 'shape') else 'tensor'}")
         return True
     except Exception as e:
-        print(f"❌ {name} forward pass failed!")
+        print(f"\n❌ {name} forward pass failed!")
         print(f"   Error: {str(e)}")
         traceback.print_exc()
         return False
@@ -213,6 +239,12 @@ def main():
         loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
         batch = next(iter(loader))
         print(f"✅ Dataset created: {len(dataset)} batches")
+        
+        # Debug: Show actual shapes
+        print(f"\n📊 Batch shapes:")
+        for key, val in batch.items():
+            if isinstance(val, torch.Tensor):
+                print(f"   {key}: {val.shape}")
     except Exception as e:
         print(f"❌ Failed to create dataset: {e}")
         return False
