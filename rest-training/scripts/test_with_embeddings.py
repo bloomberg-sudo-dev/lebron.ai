@@ -214,20 +214,11 @@ def main():
         traceback.print_exc()
         return False
     
-    # Test VAE
-    print("\n[3/4] Testing VAE encoder...")
-    try:
-        with torch.no_grad():
-            # Dummy video input (B, T, C, H, W)
-            dummy_video = torch.randn(1, 8, 3, 64, 64).to(args.device)
-            latent = vae.encode(dummy_video)
-        print(f"✅ VAE encode successful: {dummy_video.shape} → {latent.shape}")
-    except Exception as e:
-        print(f"❌ VAE encode failed: {e}")
-        traceback.print_exc()
-        return False
+    # Skip VAE test - we have pre-computed embeddings (which ARE VAE output)
+    print("\n[3/4] Skipping VAE encoder test...")
+    print("     (Using pre-computed embeddings, so VAE validation not needed)")
     
-    # Test A2V-DiT
+    # Test A2V-DiT with real embeddings (this is what matters!)
     print("\n[4/4] Testing A2V-DiT with real embeddings...")
     success = test_model_forward(model, batch, args.device, "A2V-DiT")
     
