@@ -28,11 +28,32 @@ class EmbeddingTestDataset(Dataset):
     def __init__(self, embedding_path, seq_length=16):
         """
         Args:
-            embedding_path: Path to pre-computed embeddings tensor
+            embedding_path: Path to pre-computed embeddings tensor or state dict
             seq_length: Number of frames per sequence
         """
         # Load embeddings
-        self.embeddings = torch.load(embedding_path, map_location='cpu')
+        loaded = torch.load(embedding_path, map_location='cpu')
+        
+        # Handle dict case (OrderedDict or state_dict)
+        if isinstance(loaded, dict):
+            print(f"⚠️  Loaded dict with keys: {list(loaded.keys())}")
+            # Try common keys
+            for key in ['embeddings', 'video', 'frames', 'latent', 'encoded']:
+                if key in loaded:
+                    self.embeddings = loaded[key]
+                    print(f"✅ Extracted '{key}' from dict")
+                    break
+            else:
+                # If no known key, try the first tensor in the dict
+                for key, val in loaded.items():
+                    if isinstance(val, torch.Tensor):
+                        self.embeddings = val
+                        print(f"✅ Extracted tensor '{key}' from dict")
+                        break
+                else:
+                    raise ValueError(f"No tensor found in dict. Keys: {list(loaded.keys())}")
+        else:
+            self.embeddings = loaded
         
         # Validate shape
         if self.embeddings.dim() == 3:  # (T, H, W) - single channel
