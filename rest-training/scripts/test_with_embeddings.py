@@ -206,7 +206,8 @@ def main():
     try:
         vae = TemporalVAE().to(args.device)
         model = A2VDIT().to(args.device)
-        scheduler = FlowMatcher()
+        # FlowMatcher is a scheduler, initialized during training
+        # scheduler = FlowMatcher(model=model, scheduler=noise_scheduler)
         print("✅ Models initialized")
     except Exception as e:
         print(f"❌ Failed to initialize models: {e}")
