@@ -110,9 +110,8 @@ def main():
     model = TemporalVAE(
         in_channels=4,
         latent_channels=32,
-        height=32,
-        width=32,
-        time_frames=8
+        hidden_dims=[64, 128, 256],
+        kl_weight=0.00001
     ).to(device)
     
     total_params = sum(p.numel() for p in model.parameters())
