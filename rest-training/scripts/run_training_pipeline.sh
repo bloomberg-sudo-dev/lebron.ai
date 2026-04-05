@@ -21,6 +21,17 @@ echo "Audio Output: $AUDIO_DIR"
 echo "Checkpoints: $CHECKPOINT_DIR"
 echo ""
 
+# Ensure ffmpeg is installed
+echo "🔧 Checking dependencies..."
+if ! command -v ffmpeg &> /dev/null; then
+    echo "  ⚠️  ffmpeg not found, installing..."
+    apt-get update -qq && apt-get install -y ffmpeg > /dev/null 2>&1
+    echo "  ✅ ffmpeg installed"
+else
+    echo "  ✅ ffmpeg ready"
+fi
+echo ""
+
 # Step 1: Extract Audio
 echo "📹 Step 1: Extracting audio from videos..."
 python3 "$SCRIPT_DIR/extract_audio.py" \
