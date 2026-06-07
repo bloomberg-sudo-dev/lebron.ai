@@ -1,0 +1,54 @@
+{
+  "name": "Garlic Stir-Fry Vegetables",
+  "description": "A quick, vibrant stir-fry with crisp vegetables in a savory garlic sauce.",
+  "servings": 2,
+  "prep_time_minutes": 15,
+  "cook_time_minutes": 10,
+  "ingredients": [
+    "2 tablespoons vegetable oil",
+    "4 cloves garlic, minced",
+    "1 teaspoon fresh ginger, grated",
+    "1 bell pepper, sliced",
+    "1 cup broccoli florets",
+    "1 medium carrot, julienned",
+    "1 cup snap peas",
+    "2 tablespoons soy sauce",
+    "1 tablespoon oyster sauce (or hoisin for vegetarian)",
+    "1 teaspoon sesame oil",
+    "1 teaspoon cornstarch mixed with 2 tablespoons water",
+    "Sesame seeds for garnish",
+    "Cooked rice to serve"
+  ],
+  "steps": [
+    {
+      "number": 1,
+      "title": "Prep everything first",
+      "instruction": "Stir-fry moves fast, so have everything ready before you start: slice all the vegetables, mince the garlic and ginger, and mix the sauce — soy sauce, oyster sauce, and sesame oil in a small bowl."
+    },
+    {
+      "number": 2,
+      "title": "Get the wok screaming hot",
+      "instruction": "Heat your wok or largest skillet over high heat until it's very hot — about 2 minutes. You want it smoking slightly. Add the vegetable oil and swirl to coat."
+    },
+    {
+      "number": 3,
+      "title": "Add aromatics",
+      "instruction": "Add the garlic and ginger. Stir constantly for 30 seconds until fragrant. Don't let it burn — this happens fast on high heat."
+    },
+    {
+      "number": 4,
+      "title": "Add the hard vegetables first",
+      "instruction": "Add the carrots and broccoli first since they take longer. Toss constantly for 2 minutes. Then add the bell pepper and snap peas and toss for another 2 minutes."
+    },
+    {
+      "number": 5,
+      "title": "Add the sauce",
+      "instruction": "Pour in the sauce mixture and toss to coat everything. Then add the cornstarch slurry and keep tossing for 1 minute until the sauce thickens and coats the vegetables in a glossy glaze."
+    },
+    {
+      "number": 6,
+      "title": "Serve immediately",
+      "instruction": "Plate over steamed rice, sprinkle with sesame seeds, and serve right away. Stir-fry waits for no one!"
+    }
+  ]
+}

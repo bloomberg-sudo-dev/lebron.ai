@@ -1,0 +1,41 @@
+{
+  "name": "Perfect Scrambled Eggs",
+  "description": "Creamy, soft scrambled eggs cooked low and slow for the best texture.",
+  "servings": 2,
+  "prep_time_minutes": 2,
+  "cook_time_minutes": 8,
+  "ingredients": [
+    "4 large eggs",
+    "2 tablespoons butter",
+    "2 tablespoons heavy cream or crème fraîche",
+    "Salt and freshly ground black pepper",
+    "Fresh chives or herbs (optional)"
+  ],
+  "steps": [
+    {
+      "number": 1,
+      "title": "Crack and whisk the eggs",
+      "instruction": "Crack 4 eggs into a bowl. Add a pinch of salt and whisk until the yolks and whites are fully combined. Don't add the cream yet."
+    },
+    {
+      "number": 2,
+      "title": "Start low and slow",
+      "instruction": "Put a non-stick pan over low heat and add the butter. Once it's melted and foamy, pour in the eggs. The key is low heat — don't rush this."
+    },
+    {
+      "number": 3,
+      "title": "Stir constantly",
+      "instruction": "Using a rubber spatula, stir the eggs continuously in slow figures of 8, scraping the bottom and sides. You want small, soft curds forming gradually over 5-6 minutes."
+    },
+    {
+      "number": 4,
+      "title": "Pull off heat when almost done",
+      "instruction": "When the eggs look 80% set but still glossy and slightly underdone, take the pan off the heat. Stir in the cream — this stops the cooking and makes them silky."
+    },
+    {
+      "number": 5,
+      "title": "Season and serve",
+      "instruction": "Season with salt and pepper. Serve immediately on warm toast, topped with chives or herbs if you like."
+    }
+  ]
+}

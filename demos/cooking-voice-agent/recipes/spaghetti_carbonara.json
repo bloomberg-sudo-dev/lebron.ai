@@ -1,0 +1,50 @@
+{
+  "name": "Spaghetti Carbonara",
+  "description": "A classic Roman pasta dish with eggs, cheese, pancetta, and black pepper.",
+  "servings": 2,
+  "prep_time_minutes": 10,
+  "cook_time_minutes": 20,
+  "ingredients": [
+    "200g spaghetti",
+    "100g pancetta or guanciale, diced",
+    "2 large eggs",
+    "1 egg yolk",
+    "50g Pecorino Romano, finely grated",
+    "50g Parmesan, finely grated",
+    "2 cloves garlic (optional)",
+    "Freshly ground black pepper",
+    "Salt for pasta water"
+  ],
+  "steps": [
+    {
+      "number": 1,
+      "title": "Boil the pasta water",
+      "instruction": "Bring a large pot of water to a boil. Add a generous amount of salt — it should taste like the sea. This is the only chance to season the pasta itself."
+    },
+    {
+      "number": 2,
+      "title": "Make the egg and cheese mixture",
+      "instruction": "In a bowl, whisk together the 2 eggs, 1 egg yolk, most of the Pecorino and Parmesan, and a generous amount of black pepper. Set aside."
+    },
+    {
+      "number": 3,
+      "title": "Cook the pancetta",
+      "instruction": "In a large skillet over medium heat, cook the pancetta until crispy and the fat has rendered, about 5-7 minutes. If using garlic, add it now and cook 1 minute more. Remove from heat."
+    },
+    {
+      "number": 4,
+      "title": "Cook the spaghetti",
+      "instruction": "Cook the spaghetti in the boiling salted water until al dente, about 1-2 minutes less than the package says. Reserve 1 cup of pasta water before draining."
+    },
+    {
+      "number": 5,
+      "title": "Combine off heat",
+      "instruction": "Add the hot drained pasta to the skillet with pancetta. Remove from heat entirely. Quickly pour in the egg mixture, tossing rapidly. Add pasta water a splash at a time to create a silky, creamy sauce. Work fast — the residual heat cooks the eggs without scrambling them."
+    },
+    {
+      "number": 6,
+      "title": "Serve immediately",
+      "instruction": "Plate the pasta, top with remaining cheese and more black pepper. Serve right away while hot and creamy."
+    }
+  ]
+}
